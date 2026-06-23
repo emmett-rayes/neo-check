@@ -1,6 +1,8 @@
 package neocheck
 package parser
 
+import scala.util.{Failure, Success, Try}
+
 /** A parser that takes an input of type `Input` and produces an output of type `Output`.
  *
  * @tparam Input  the type of the input to be parsed.
@@ -29,7 +31,7 @@ abstract class ParserInterpreter[Input] extends ParserAlgebra[[Output] =>> Parse
     input => Failure(ParserError(input, message))
   }
 
-  extension [Output](self: => Parser[Input, Output])
+  extension [Output](self: => Parser[Input, Output]) {
     override def flatMap[Mapped](f: Output => Parser[Input, Mapped]): Parser[Input, Mapped] = {
       input =>
         self.parse(input).flatMap((remaining, output) =>
@@ -45,4 +47,5 @@ abstract class ParserInterpreter[Input] extends ParserAlgebra[[Output] =>> Parse
     override def orElse[Else](other: => Parser[Input, Else]): Parser[Input, Output | Else] = {
       input => self.parse(input).orElse(other.parse(input))
     }
+  }
 }
