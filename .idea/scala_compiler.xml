@@ -4,13 +4,22 @@
     <option name="separateProdTestSources" value="true" />
     <profile name="sbt 1" modules="NeoCheck" />
     <profile name="sbt 2" modules="NeoCheck.main,NeoCheck.test">
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
       <option name="featureWarnings" value="true" />
       <parameters>
-        <parameter value="-source:future" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Wunused:all" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-explain" />
+        <parameter value="-explain-types" />
+        <parameter value="-language:experimental.genericNumberLiterals" />
         <parameter value="-language:experimental.modularity" />
         <parameter value="-language:experimental.pureFunctions" />
-        <parameter value="-Wsafe-init" />
-        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-language:experimental.relaxedLambdaSyntax" />
+        <parameter value="-source:future" />
       </parameters>
     </profile>
   </component>
