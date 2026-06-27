@@ -317,4 +317,159 @@ class TokenParserTests extends AnyFunSuite {
   test("digitListInParens: fails when parentheses are absent") {
     assert(run(ParserPrograms.digitListInParens, "1,2,3").isFailure)
   }
+
+  // ── leftAssociatedAs (chainLeft) ──────────────────────────────────────────
+
+  test("leftAssociatedAs: groups a run of 'a' to the left, seeded with the empty marker") {
+    run(ParserPrograms.leftAssociatedAs, "aaa") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(((a)a)a)"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("leftAssociatedAs: combines a single 'a' with the seed") {
+    run(ParserPrograms.leftAssociatedAs, "a") match {
+      case Success((_, parsed)) => assert(parsed == "(a)")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("leftAssociatedAs: groups exactly two occurrences") {
+    run(ParserPrograms.leftAssociatedAs, "aa") match {
+      case Success((_, parsed)) => assert(parsed == "((a)a)")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("leftAssociatedAs: stops at the first non-'a', leaving the rest") {
+    run(ParserPrograms.leftAssociatedAs, "aab") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "((a)a)"): Unit
+        assert(remaining.mkString == "b")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("leftAssociatedAs: yields the bare seed when no 'a' matches") {
+    run(ParserPrograms.leftAssociatedAs, "xyz") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == ""): Unit
+        assert(remaining.mkString == "xyz")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("leftAssociatedAs: yields the bare seed on empty input") {
+    run(ParserPrograms.leftAssociatedAs, "") match {
+      case Success((_, parsed)) => assert(parsed == "")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  // ── rightAssociatedAs (chainRight) ────────────────────────────────────────
+
+  test("rightAssociatedAs: groups a run of 'a' to the right, seeded with the empty marker") {
+    run(ParserPrograms.rightAssociatedAs, "aaa") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(a(a(a)))"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("rightAssociatedAs: combines a single 'a' with the seed") {
+    run(ParserPrograms.rightAssociatedAs, "a") match {
+      case Success((_, parsed)) => assert(parsed == "(a)")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("rightAssociatedAs: groups exactly two occurrences") {
+    run(ParserPrograms.rightAssociatedAs, "aa") match {
+      case Success((_, parsed)) => assert(parsed == "(a(a))")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("rightAssociatedAs: stops at the first non-'a', leaving the rest") {
+    run(ParserPrograms.rightAssociatedAs, "aab") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(a(a))"): Unit
+        assert(remaining.mkString == "b")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("rightAssociatedAs: yields the bare seed when no 'a' matches") {
+    run(ParserPrograms.rightAssociatedAs, "xyz") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == ""): Unit
+        assert(remaining.mkString == "xyz")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("rightAssociatedAs: yields the bare seed on empty input") {
+    run(ParserPrograms.rightAssociatedAs, "") match {
+      case Success((_, parsed)) => assert(parsed == "")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  // ── chainLeft vs chainRight ───────────────────────────────────────────────
+
+  test("chainLeft and chainRight disagree on association for the same input") {
+    val left = run(ParserPrograms.leftAssociatedAs, "aaaa")
+    val right = run(ParserPrograms.rightAssociatedAs, "aaaa")
+    (left, right) match {
+      case (Success((_, l)), Success((_, r))) =>
+        assert(l == "((((a)a)a)a)"): Unit
+        assert(r == "(a(a(a(a))))"): Unit
+        assert(l != r)
+      case _ => fail("Expected both parsers to succeed")
+    }
+  }
+
+  // ── additiveExpression (term -> number ; expr -> term ("+" term)*) ─────────
+  test("additiveExpression: parses a lone term") {
+    run(ParserPrograms.additiveExpression, "1") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "n"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("additiveExpression: parses two terms separated by '+'") {
+    run(ParserPrograms.additiveExpression, "1+2") match {
+      case Success((_, parsed)) => assert(parsed == "(n+n)")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("additiveExpression: folds a chain of terms left-associatively") {
+    run(ParserPrograms.additiveExpression, "11+22+333") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "((n+n)+n)"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("additiveExpression: tolerates whitespace around terms and '+'") {
+    run(ParserPrograms.additiveExpression, "  1 + 2 + 3 ") match {
+      case Success((_, parsed)) => assert(parsed == "((n+n)+n)")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("additiveExpression: fails when no leading term is present") {
+    assert(run(ParserPrograms.additiveExpression, "+1").isFailure)
+  }
+
+  test("additiveExpression: fails on empty input") {
+    assert(run(ParserPrograms.additiveExpression, "").isFailure)
+  }
 }
