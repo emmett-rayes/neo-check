@@ -5,14 +5,18 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.util.{Failure, Success}
 
-/** Unit tests for [[TokenParserInterpreter]] via the [[ParserPrograms]] catalogue. */
-class TokenParserTests extends AnyFunSuite {
+/** Interpreter-agnostic unit tests against the [[ParserPrograms]] catalogue.
+ *
+ * The suite is parameterized over the parser carrier and its [[ParserAlgebra]] interpreter
+ *
+ * @tparam Parser the parser carrier produced by the interpreter.
+ */
+abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) extends AnyFunSuite {
 
-  given TokenParserInterpreter = NaiveTokenParserInterpreter()
+  /** Converts a String to [[Tokens]] and drives the parser produced by the interpreter. */
+  protected def run[A](program: Parser[A], input: String): ParserResult[Tokens, A]
 
-  /** Convenience runner: converts a String to [[Tokens]] and drives the parser. */
-  private def run[A](program: TokenParser[A], input: String) =
-    program.parse(input.asTokens)
+  protected given ParserAlgebra[Parser] = interpreter
 
   // ── literalHello ──────────────────────────────────────────────────────────
 
@@ -318,7 +322,7 @@ class TokenParserTests extends AnyFunSuite {
     assert(run(ParserPrograms.digitListInParens, "1,2,3").isFailure)
   }
 
-  // ── leftAssociatedAs (chainLeft) ──────────────────────────────────────────
+  // ── leftAssociatedAs ──────────────────────────────────────────
 
   test("leftAssociatedAs: groups a run of 'a' to the left, seeded with the empty marker") {
     run(ParserPrograms.leftAssociatedAs, "aaa") match {
@@ -368,7 +372,7 @@ class TokenParserTests extends AnyFunSuite {
     }
   }
 
-  // ── rightAssociatedAs (chainRight) ────────────────────────────────────────
+  // ── rightAssociatedAs ────────────────────────────────────────
 
   test("rightAssociatedAs: groups a run of 'a' to the right, seeded with the empty marker") {
     run(ParserPrograms.rightAssociatedAs, "aaa") match {
@@ -432,7 +436,7 @@ class TokenParserTests extends AnyFunSuite {
     }
   }
 
-  // ── additiveExpression (term -> number ; expr -> term ("+" term)*) ─────────
+  // ── additiveExpression ─────────
   test("additiveExpression: parses a lone term") {
     run(ParserPrograms.additiveExpression, "1") match {
       case Success((remaining, parsed)) =>
@@ -471,5 +475,66 @@ class TokenParserTests extends AnyFunSuite {
 
   test("additiveExpression: fails on empty input") {
     assert(run(ParserPrograms.additiveExpression, "").isFailure)
+  }
+
+  // ── rightRecursive ─────────────────────────────────────────
+  test("rightRecursive: parses a right-recursive grammar") {
+    run(ParserPrograms.rightRecursive, "1+2+3") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(n+(n+n))"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+}
+
+/** Runs the shared [[TokenParserTests]] against the naive interpreter. */
+class NaiveTokenParserTests extends TokenParserTests[TokenParser](NaiveTokenParserInterpreter()) {
+
+  override protected def run[A](program: TokenParser[A], input: String): ParserResult[Tokens, A] =
+    program.parse(input.asTokens)
+
+  // ── leftRecursive ──────────────────────────────────────────────────────────
+  test("leftRecursive: should stack overflow on left-recursive grammar") {
+    assertThrows[StackOverflowError] {
+      run(ParserPrograms.leftRecursive, "1+2+3")
+    }
+  }
+}
+
+/** Runs the shared [[TokenParserTests]] against the memoizing packrat interpreter,
+ * plus packrat-specific expectations the naive interpreter cannot satisfy.
+ */
+class PackratTokenParserTests
+  extends TokenParserTests[PackratParserF[Tokens]](new PackratTransformer[Tokens](NaiveTokenParserInterpreter()) {}) {
+
+  override protected def run[A](program: PackratParser[Tokens, A], input: String): ParserResult[Tokens, A] =
+    program.parse(input.asTokens)
+
+  // ── memoization behaviour ─────────────────────────────────────────────────
+  test("PackratParser: memoizes results, invoking the underlying parser once per input") {
+    var calls = 0
+    val counting: Parser[Tokens, String] = input => {
+      calls += 1
+      Success((input, "x"))
+    }
+    val packrat = PackratParser(counting)
+    val first = packrat.parse("a".asTokens)
+    val second = packrat.parse("a".asTokens)
+    assert(first == second): Unit
+    assert(calls == 1)
+  }
+
+  test("PackratParser: caches results per distinct input") {
+    var calls = 0
+    val counting: Parser[Tokens, String] = input => {
+      calls += 1
+      Success((input, "x"))
+    }
+    val packrat = PackratParser(counting)
+    packrat.parse("a".asTokens): Unit
+    packrat.parse("b".asTokens): Unit
+    packrat.parse("a".asTokens): Unit
+    assert(calls == 2)
   }
 }
