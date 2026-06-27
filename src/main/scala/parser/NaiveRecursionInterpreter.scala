@@ -8,7 +8,7 @@ package parser
  * @tparam Input the type of the input to be parsed.
  */
 trait NaiveRecursionInterpreter[Input] extends ParserAlgebra[[Output] =>> Parser[Input, Output]] {
-  override def recursive[Output](p: (=> Parser[Input, Output]) => Parser[Input, Output]): Parser[Input, Output] = {
+  override def recursive[Output](p: Parser[Input, Output] => Parser[Input, Output]): Parser[Input, Output] = {
     lazy val rec: Parser[Input, Output] = input => p(rec).parse(input)
     rec
   }

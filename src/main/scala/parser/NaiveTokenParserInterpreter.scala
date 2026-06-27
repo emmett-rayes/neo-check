@@ -1,0 +1,4 @@
+package neocheck
+package parser
+
+final class NaiveTokenParserInterpreter extends TokenParserInterpreter, NaiveRecursionInterpreter[Tokens]

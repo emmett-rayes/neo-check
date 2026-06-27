@@ -8,7 +8,7 @@ import scala.util.{Failure, Success}
 /** Unit tests for [[TokenParserInterpreter]] via the [[ParserPrograms]] catalogue. */
 class TokenParserTests extends AnyFunSuite {
 
-  given TokenParserInterpreter = TokenParserInterpreter()
+  given TokenParserInterpreter = NaiveTokenParserInterpreter()
 
   /** Convenience runner: converts a String to [[Tokens]] and drives the parser. */
   private def run[A](program: TokenParser[A], input: String) =

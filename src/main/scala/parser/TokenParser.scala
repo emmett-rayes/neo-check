@@ -11,14 +11,14 @@ import scala.util.matching.Regex
 type TokenParser[Output] = Parser[Tokens, Output]
 
 /** An interpreter of [[ParserAlgebra]] for [[TokenParser]]. */
-class TokenParserInterpreter extends ParserInterpreter[Tokens] {
+trait TokenParserInterpreter extends ParserInterpreter[Tokens] {
   override type Output[K <: ParserKind] = K match {
     case ParserKind.Literal => String
     case ParserKind.Regex => String
   }
 
   override def literal(expected: String): TokenParser[String] = {
-    input =>
+    input => {
       val trimmed = input.skipWhitespace
       Try {
         if !trimmed.startsWith(expected.asTokens) then
@@ -27,10 +27,11 @@ class TokenParserInterpreter extends ParserInterpreter[Tokens] {
           case (matched, remaining) => (remaining, matched.mkString)
         }
       }
+    }
   }
 
   override def regex(expected: Regex): TokenParser[String] = {
-    input =>
+    input => {
       val trimmed = input.skipWhitespace
       Try {
         if trimmed.isEmpty then
@@ -40,5 +41,6 @@ class TokenParserInterpreter extends ParserInterpreter[Tokens] {
           case Some(m) => (trimmed.mkString.substring(m.end), trimmed.mkString.substring(m.start, m.end))
         }
       }
+    }
   }
 }
