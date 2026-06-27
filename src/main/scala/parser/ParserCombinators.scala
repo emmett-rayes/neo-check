@@ -113,5 +113,25 @@ object ParserCombinators {
     def between[First, Second](first: Parser[First], second: Parser[Second]): Parser[Output] = {
       first.skipThen(self).thenSkip(second)
     }
+
+    /** Runs `self` repeatedly, creating a left-associated result using the binary operator `op`.
+     *
+     * @param op the binary operator used to combine results.
+     * @param z  the initial value to use for the leftmost combination.
+     * @return a parser producing the left-associated result of applying `op` to the outputs of `self`.
+     */
+    def chainLeft(z: Output)(op: (Output, Output) => Output): Parser[Output] = {
+      self.repeated.map { output => output.foldLeft(z)(op) }
+    }
+
+    /** Runs `self` repeatedly, creating a right-associated result using the binary operator `op`.
+     *
+     * @param op the binary operator used to combine results.
+     * @param z  the initial value to use for the rightmost combination.
+     * @return a parser producing the right-associated result of applying `op` to the outputs of `self`.
+     */
+    def chainRight(z: Output)(op: (Output, Output) => Output): Parser[Output] = {
+      self.repeated.map { output => output.foldRight(z)(op) }
+    }
   }
 }
