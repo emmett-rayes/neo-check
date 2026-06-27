@@ -110,4 +110,39 @@ object ParserPrograms {
     val list = digits.andThen(tail).map((head, rest) => head :: rest)
     list.between(P.literal("("), P.literal(")"))
   }
+
+  /** Folds a run of `"a"` literals into a fully parenthesized, left-associated string.
+   *
+   * Each matched `"a"` is mapped to the marker `"a"`, then the markers are combined with
+   * `(left, right) => s"($left$right)"`. The resulting grouping reveals the left-associative
+   * fold order, e.g. `"aaa"` yields `"((aa)a)"`.
+   *
+   * Exercises [[ParserCombinators.chainLeft]].
+   */
+  def leftAssociatedAs[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
+    P.literal("a").map(_ => "a").chainLeft("")((left, right) => s"($left$right)")
+  }
+
+  /** Folds a run of `"a"` literals into a fully parenthesized, right-associated string.
+   *
+   * Mirror of [[leftAssociatedAs]] using [[ParserCombinators.chainRight]], so the same input
+   * groups to the right, e.g. `"aaa"` yields `"(a(aa))"`.
+   *
+   * Exercises [[ParserCombinators.chainRight]].
+   */
+  def rightAssociatedAs[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
+    P.literal("a").map(_ => "a").chainRight("")((left, right) => s"($left$right)")
+  }
+
+  /** Parses a left-associative additive expression of number terms separated by `"+"`.
+   *
+   * Implements the grammar `term -> number ; expr -> term ("+" term)*`.
+   *
+   * Exercises [[ParserCombinators.chainLeft]].
+   */
+  def additiveExpression[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
+    val separator = P.literal("+").orElse(P.success(""))
+    val term = P.regex("[0-9]+".r).map(_ => "n")
+    term.flatMap(first => separator.skipThen(term).chainLeft(first)((left, right) => s"($left+$right)"))
+  }
 }
