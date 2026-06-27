@@ -3,12 +3,6 @@ package parser
 
 import scala.util.matching.Regex
 
-/** The base types of parsers that can be defined in the parser algebra.
- */
-enum ParserKind {
-  case Literal()
-  case Regex()
-}
 
 /** A parser typeclass algebra that defines the basic operations of a parser.
  *
