@@ -55,7 +55,7 @@ trait ParserAlgebra[Parser[_]] {
    * @param self the parser to extend.
    * @tparam Output the result type produced by `self`.
    */
-  extension [Output](self: => Parser[Output]) {
+  extension [Output](self: Parser[Output]) {
     /** Sequences `self` with a parser derived from its result.
      *
      * Runs `self` and, if it succeeds, feeds its `Output` to `f` to get the
@@ -81,6 +81,6 @@ trait ParserAlgebra[Parser[_]] {
      * @tparam Else the result type of `other`.
      * @return a parser producing the result of `self`, or of `other` on failure.
      */
-    def orElse[Else](other: => Parser[Else]): Parser[Output | Else]
+    def orElse[Else](other: Parser[Else]): Parser[Output | Else]
   }
 }

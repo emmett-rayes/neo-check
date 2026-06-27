@@ -17,7 +17,7 @@ trait ParserInterpreter[Input] extends ParserAlgebra[[Output] =>> Parser[Input, 
     input => Failure(ParserError(input, message))
   }
 
-  extension [Output](self: =>Parser[Input, Output]) {
+  extension [Output](self: Parser[Input, Output]) {
     override def flatMap[Mapped](f: Output => Parser[Input, Mapped]): Parser[Input, Mapped] = {
       input => {
         self.parse(input).flatMap((remaining, output) =>
@@ -31,7 +31,7 @@ trait ParserInterpreter[Input] extends ParserAlgebra[[Output] =>> Parser[Input, 
       }
     }
 
-    override def orElse[Else](other: =>Parser[Input, Else]): Parser[Input, Output | Else] = {
+    override def orElse[Else](other: Parser[Input, Else]): Parser[Input, Output | Else] = {
       input => {
         self.parse(input).orElse(other.parse(input))
       }
