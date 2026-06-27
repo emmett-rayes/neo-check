@@ -145,4 +145,30 @@ object ParserPrograms {
     val term = P.regex("[0-9]+".r).map(_ => "n")
     term.flatMap(first => separator.skipThen(term).chainLeft(first)((left, right) => s"($left+$right)"))
   }
+
+  /** Parses a left-recursive additive expression of number terms separated by `"+"`.
+   *
+   * Implements the grammar `expr -> expr "+" term | term`, which is left-recursive.
+   *
+   * Exercises [[ParserAlgebra.recursive]].
+   */
+  def leftRecursive[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
+    val term = P.regex("[0-9]+".r).map(_ => "n")
+    P.recursive { expr =>
+      expr.andThen(P.literal("+").skipThen(term)).map { (left, right) => s"($left+$right)" }.orElse(term)
+    }
+  }
+
+  /** Parses a right-recursive additive expression of number terms separated by `"+"`.
+   *
+   * Implements the grammar `expr -> term "+" expr | term`, which is right-recursive.
+   *
+   * Exercises [[ParserAlgebra.recursive]].
+   */
+  def rightRecursive[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
+    val term = P.regex("[0-9]+".r).map(_ => "n")
+    P.recursive { expr =>
+      term.andThen(P.literal("+").skipThen(expr)).map { (left, right) => s"($left+$right)" }.orElse(term)
+    }
+  }
 }
