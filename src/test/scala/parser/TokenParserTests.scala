@@ -545,3 +545,31 @@ class SeedGrowingTokenParserTests extends TokenParserTests[TokenParser](SeedGrow
     }
   }
 }
+
+/** Runs the shared [[TokenParserTests]] against the seed-growing interpreter [[SeedGrowingTokenParserInterpreter]]. */
+class SeedGrowingPackratTokenParserTests extends
+  TokenParserTests[PackratParserF[Tokens]](new PackratTransformer[Tokens](SeedGrowingTokenParserInterpreter()) {}) {
+
+  override protected def run[A](program: PackratParser[Tokens, A], input: String): ParserResult[Tokens, A] =
+    program.parse(input.asTokens)
+
+  // ── leftRecursive ──────────────────────────────────────────────────────────
+  test("leftRecursive: parses a direct left-recursive grammar") {
+    run(ParserPrograms.leftRecursive, "1+2+3") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "((n+n)+n)"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  // ── indirectLeftRecursive ───────────────────────────────────────────────────
+  test("indirectLeftRecursive: parses an indirect left recursion") {
+    run(ParserPrograms.indirectLeftRecursive, "1xyx") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(((n)x)y)x"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+}
