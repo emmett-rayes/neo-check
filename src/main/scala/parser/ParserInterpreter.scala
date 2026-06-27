@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
  *
  * @tparam Input the type of the input to be parsed.
  */
-trait ParserInterpreter[Input] extends ParserAlgebra[[Output] =>> Parser[Input, Output]] {
+trait ParserInterpreter[Input] extends ParserAlgebra[ParserF[Input]] {
   override def success[Output](output: Output): Parser[Input, Output] = {
     input => Success((input, output))
   }
