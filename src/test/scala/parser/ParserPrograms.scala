@@ -171,4 +171,23 @@ object ParserPrograms {
       term.andThen(P.literal("+").skipThen(expr)).map { (left, right) => s"($left+$right)" }.orElse(term)
     }
   }
+
+  /** Parses an indirectly left-recursive grammar of digit terms.
+   *
+   * Implements the mutually recursive grammar `a -> b "x" | term`, `b -> a "y" | term`, which is left-recursive.
+   *
+   * This language is regular and can be written as `[0-9]+ x? (yx)*`.
+   *
+   * Exercises [[ParserAlgebra.recursive]] under indirect left recursion.
+   *
+   * @note This grammar is problematic because it makes use of the host language's recursion to define the parser.
+   *       The inner parser `b` is effectively not memoizable.
+   */
+  def indirectLeftRecursive[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
+    val term = P.regex("[0-9]+".r).map(_ => "n")
+    P.recursive { a =>
+      val b = a.thenSkip(P.literal("y")).map(left => s"($left)y").orElse(term)
+      b.thenSkip(P.literal("x")).map(left => s"($left)x").orElse(term)
+    }
+  }
 }
