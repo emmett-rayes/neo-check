@@ -500,6 +500,13 @@ class NaiveTokenParserTests extends TokenParserTests[TokenParser](NaiveTokenPars
       run(ParserPrograms.leftRecursive, "1+2+3")
     }
   }
+
+  // ── indirectLeftRecursive ───────────────────────────────────────────────────
+  test("indirectLeftRecursive: should stack overflow on indirect left recursion") {
+    assertThrows[StackOverflowError] {
+      run(ParserPrograms.indirectLeftRecursive, "1yx")
+    }
+  }
 }
 
 /** Runs the shared [[TokenParserTests]] against the memoizing packrat interpreter,
