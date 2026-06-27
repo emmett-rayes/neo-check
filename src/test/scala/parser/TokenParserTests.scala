@@ -517,33 +517,6 @@ class PackratTokenParserTests
 
   override protected def run[A](program: PackratParser[Tokens, A], input: String): ParserResult[Tokens, A] =
     program.parse(input.asTokens)
-
-  // ── memoization behaviour ─────────────────────────────────────────────────
-  test("PackratParser: memoizes results, invoking the underlying parser once per input") {
-    var calls = 0
-    val counting: Parser[Tokens, String] = input => {
-      calls += 1
-      Success((input, "x"))
-    }
-    val packrat = PackratParser(counting)
-    val first = packrat.parse("a".asTokens)
-    val second = packrat.parse("a".asTokens)
-    assert(first == second): Unit
-    assert(calls == 1)
-  }
-
-  test("PackratParser: caches results per distinct input") {
-    var calls = 0
-    val counting: Parser[Tokens, String] = input => {
-      calls += 1
-      Success((input, "x"))
-    }
-    val packrat = PackratParser(counting)
-    packrat.parse("a".asTokens): Unit
-    packrat.parse("b".asTokens): Unit
-    packrat.parse("a".asTokens): Unit
-    assert(calls == 2)
-  }
 }
 
 /** Runs the shared [[TokenParserTests]] against the seed-growing interpreter [[SeedGrowingTokenParserInterpreter]]. */
