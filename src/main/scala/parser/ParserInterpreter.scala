@@ -18,6 +18,15 @@ trait ParserInterpreter[Input] extends ParserAlgebra[ParserF[Input]] {
   }
 
   extension [Output](self: Parser[Input, Output]) {
+    override def not: Parser[Input, Unit] = {
+      input => {
+        self.parse(input) match {
+          case Success(_) => Failure(ParserError(input, "Illegal input at this position."))
+          case Failure(_) => Success((input, ()))
+        }
+      }
+    }
+
     override def flatMap[Mapped](f: Output => Parser[Input, Mapped]): Parser[Input, Mapped] = {
       input => {
         self.parse(input).flatMap((remaining, output) =>
