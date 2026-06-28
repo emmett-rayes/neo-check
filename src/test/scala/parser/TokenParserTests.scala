@@ -165,6 +165,47 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     assert(run(ParserPrograms.trueOrFalse, "").isFailure)
   }
 
+  // ── notDigit ──────────────────────────────────────────────────────────────
+
+  test("notDigit: succeeds and consumes no input when the next character is not a digit") {
+    run(ParserPrograms.notDigit, "abc") match {
+      case Success((remaining, _)) =>
+        assert(remaining.mkString == "abc")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("notDigit: succeeds with empty result when next character is not a digit") {
+    run(ParserPrograms.notDigit, "xyz") match {
+      case Success((_, parsed)) => assert(parsed == ())
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("notDigit: fails when the next character is a digit") {
+    assert(run(ParserPrograms.notDigit, "5").isFailure)
+  }
+
+  test("notDigit: fails when the next character is a digit even with trailing characters") {
+    assert(run(ParserPrograms.notDigit, "9abc").isFailure)
+  }
+
+  test("notDigit: after whitespace skipping, succeeds if the next non-whitespace character is not a digit") {
+    run(ParserPrograms.notDigit, "  a") match {
+      case Success((remaining, _)) =>
+        assert(remaining.mkString == "  a")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("notDigit: succeeds on empty input (nothing to match means not matched)") {
+    run(ParserPrograms.notDigit, "") match {
+      case Success((remaining, _)) =>
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
   // ── optionalDigits ────────────────────────────────────────────────────────
 
   test("optionalDigits: succeeds with Some when digits are present") {
