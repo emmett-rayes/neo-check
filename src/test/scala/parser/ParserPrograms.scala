@@ -66,6 +66,14 @@ object ParserPrograms {
     P.regex("[0-9]+".r).optional
   }
 
+  /** Matches comma-separated digits, collecting all digit groups into a list.
+   *
+   * Exercises the separator-based [[ParserCombinators.repeated]] overload.
+   */
+  def commaSeparatedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Regex]]] = {
+    P.regex("[0-9]+".r).separatedBy(P.literal(","))
+  }
+
   /** Matches `"ab"` greedily zero or more times, collecting each match.
    *
    * Exercises [[ParserCombinators.repeated]].
