@@ -58,6 +58,14 @@ object ParserPrograms {
     P.literal("true").orElse(P.literal("false"))
   }
 
+  /** Optionally matches a run of digits, producing `Some` if present or `None` if absent.
+   *
+   * Exercises [[ParserCombinators.optional]].
+   */
+  def optionalDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[Option[P.Output[Regex]]] = {
+    P.regex("[0-9]+".r).optional
+  }
+
   /** Matches `"ab"` greedily zero or more times, collecting each match.
    *
    * Exercises [[ParserCombinators.repeated]].
