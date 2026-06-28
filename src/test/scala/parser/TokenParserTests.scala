@@ -206,6 +206,43 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
+  // ── lookaheadDigits ────────────────────────────────────────────────────────
+
+  test("lookaheadDigits: succeeds without consuming input when digits are present") {
+    run(ParserPrograms.lookaheadDigits, "123abc") match {
+      case Success((remaining, _)) =>
+        assert(remaining.mkString == "123abc")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("lookaheadDigits: produces Unit result") {
+    run(ParserPrograms.lookaheadDigits, "456") match {
+      case Success((_, parsed)) => assert(parsed == ())
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("lookaheadDigits: fails when no digits are present") {
+    assert(run(ParserPrograms.lookaheadDigits, "abc").isFailure)
+  }
+
+  test("lookaheadDigits: fails even though lookahead doesn't consume, parse still fails on absence") {
+    assert(run(ParserPrograms.lookaheadDigits, "xyz123").isFailure)
+  }
+
+  test("lookaheadDigits: succeeds with multiple digits and leaves all unconsumed") {
+    run(ParserPrograms.lookaheadDigits, "9876543xyz") match {
+      case Success((remaining, _)) =>
+        assert(remaining.mkString == "9876543xyz")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("lookaheadDigits: fails on empty input") {
+    assert(run(ParserPrograms.lookaheadDigits, "").isFailure)
+  }
+
   // ── optionalDigits ────────────────────────────────────────────────────────
 
   test("optionalDigits: succeeds with Some when digits are present") {
