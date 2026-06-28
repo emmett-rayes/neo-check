@@ -80,6 +80,14 @@ trait ParserAlgebra[Parser[_]] {
    * @tparam Output the result type produced by `self`.
    */
   extension [Output](self: Parser[Output]) {
+    /** Creates a parser that succeeds if `self` fails, and fails if `self` succeeds.
+     *
+     * This functions as the negation operation of the parser algebra.
+     *
+     * @return a parser that succeeds if `self` fails, and fails if `self` succeeds.
+     */
+    def not: Parser[Unit]
+
     /** Sequences `self` with a parser derived from its result.
      *
      * Runs `self` and, if it succeeds, feeds its `Output` to `f` to get the
