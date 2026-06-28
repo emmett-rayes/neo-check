@@ -34,14 +34,23 @@ object ParserCombinators {
       self.map(Some(_)).orElse(P.success(None))
     }
 
+    /** Applies `self` without consuming any input, succeeding if `self` would succeed and failing if `self` would fail.
+     *
+     * Checks whether `self` can be applied at the current input position, but does not consume any input or produce any output.
+     *
+     * @return a parser that succeeds if `self` would succeed, and fails if `self` would fail, without consuming any input.
+     */
+    def lookahead: Parser[Unit] = {
+      self.not.not
+    }
+
     /** Applies `self` greedily as many times as possible, collecting the results into a list.
      *
      * Repeatedly runs `self`, accumulating each output, until it no longer succeeds,
      * then succeeds with the collected list. Matching zero times is allowed and yields an empty list,
      * so this parser never fails.
      *
-     * @return a parser producing the list of outputs of every successful
-     *         application of `self`.
+     * @return a parser producing the list of outputs of every successful application of `self`.
      */
     def repeated: Parser[List[Output]] = {
       val greedy =
