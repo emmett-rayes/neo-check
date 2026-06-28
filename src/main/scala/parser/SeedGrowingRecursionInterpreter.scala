@@ -29,7 +29,7 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
       if improved(best, result) then loop(next, result)(input) else best
     }
 
-    val seed = failure("left recursion seed")
+    val seed = failure("Infinite recursion detected")
     input => loop(seed, seed.parse(input))(input)
   }
 
@@ -82,8 +82,8 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
     }
 
     // cast safety:
-    // `seeds` contains `Parser[Input, Output(i)]` at every position `i`
-    val seed = Tuple.fromArray(Array.fill(size.value)(failure("left recursion seed")))
+    // `seed` contains `Parser[Input, Output(i)]` at every position `i`
+    val seed = Tuple.fromArray(Array.fill(size.value)(failure("Infinite recursion detected")))
       .asInstanceOf[NamedTuple.Map[Outputs, ParserF[Input]]]
 
     val parsers = Array.tabulate[Parser[Input, ?]](size.value) {
