@@ -58,6 +58,14 @@ object ParserPrograms {
     P.literal("true").orElse(P.literal("false"))
   }
 
+  /** Succeeds if the next character is not a digit, consuming no input.
+   *
+   * Exercises [[ParserAlgebra.not]] to negate the digit regex.
+   */
+  def notDigit[Parser[_]](using P: ParserAlgebra[Parser]): Parser[Unit] = {
+    P.regex("[0-9]".r).not
+  }
+
   /** Optionally matches a run of digits, producing `Some` if present or `None` if absent.
    *
    * Exercises [[ParserCombinators.optional]].
