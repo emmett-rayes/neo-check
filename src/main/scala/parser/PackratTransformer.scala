@@ -55,6 +55,10 @@ trait PackratTransformer[Input](val underlying: ParserAlgebra[ParserF[Input]])
   }
 
   extension [Output](self: PackratParser[Input, Output]) {
+    override def not: PackratParser[Input, Unit] = {
+      PackratParser(underlying.not(self))
+    }
+
     override def flatMap[Mapped](f: Output => PackratParser[Input, Mapped]): PackratParser[Input, Mapped] = {
       PackratParser(underlying.flatMap(self)(f))
     }
