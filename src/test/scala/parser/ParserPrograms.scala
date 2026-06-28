@@ -66,6 +66,14 @@ object ParserPrograms {
     P.regex("[0-9]".r).not
   }
 
+  /** Checks for the presence of digits without consuming them.
+   *
+   * Exercises [[ParserCombinators.lookahead]].
+   */
+  def lookaheadDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[Unit] = {
+    P.regex("[0-9]+".r).lookahead
+  }
+
   /** Optionally matches a run of digits, producing `Some` if present or `None` if absent.
    *
    * Exercises [[ParserCombinators.optional]].
