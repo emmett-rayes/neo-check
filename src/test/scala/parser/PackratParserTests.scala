@@ -160,4 +160,22 @@ class PackratParserTests extends AnyFunSuite {
     // instead of being served from a cache, even though every parser the algebra constructs is wrapped for memoization.
     assert(underlying.literalParsesByExpected("y") > 1)
   }
+
+  test("SeedGrowingPackratParser: the parsers 'a' and 'b' of indirectLeftRecursiveTuple are memoized") {
+    val plain = CountingSeedGrowingInterpreter()
+    val plainParsers = ParserPrograms.indirectLeftRecursiveTuple(using plain)
+    plainParsers.a.parse("1xyx".asTokens): Unit
+    plainParsers.b.parse("1xyx".asTokens): Unit
+
+    val underlying = CountingSeedGrowingInterpreter()
+    val packrat = new PackratTransformer[Tokens](underlying) {}
+    val packratParsers = ParserPrograms.indirectLeftRecursiveTuple(using packrat)
+    packratParsers.a.parse("1xyx".asTokens): Unit
+    packratParsers.b.parse("1xyx".asTokens): Unit
+
+    // Unlike `indirectLeftRecursive`, the tuple form defines both `a` and `b` as top-level recursion outputs with
+    // stable identities, so the packrat layer can memoize either one.
+    assert(underlying.regexParses < plain.regexParses): Unit
+    assert(underlying.literalParses < plain.literalParses)
+  }
 }
