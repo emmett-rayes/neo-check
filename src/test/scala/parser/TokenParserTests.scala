@@ -367,6 +367,42 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
+  // ── twiceAb ───────────────────────────────────────────────────────────────
+
+  test("twiceAb: succeeds with exactly two matches") {
+    run(ParserPrograms.twiceAb, "abab") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("ab", "ab")): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("twiceAb: matches exactly twice even when more are available") {
+    run(ParserPrograms.twiceAb, "ababab") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("ab", "ab")): Unit
+        assert(remaining.mkString == "ab")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("twiceAb: leaves trailing input unconsumed") {
+    run(ParserPrograms.twiceAb, "ababc") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("ab", "ab")): Unit
+        assert(remaining.mkString == "c")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("twiceAb: fails with a count-based message when input is too short") {
+    run(ParserPrograms.twiceAb, "ab") match {
+      case Failure(e) => assert(e.getMessage.contains("Expected 1 more element(s)."))
+      case Success(_) => fail("Expected failure")
+    }
+  }
+
   // ── atLeastTwoAb ─────────────────────────────────────────────────────────
 
   test("atLeastTwoAb: succeeds with exactly two 'ab'") {
