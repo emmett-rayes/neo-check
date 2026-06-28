@@ -507,6 +507,13 @@ class NaiveTokenParserTests extends TokenParserTests[TokenParser](NaiveTokenPars
       run(ParserPrograms.indirectLeftRecursive, "1yx")
     }
   }
+
+  // ── indirectLeftRecursiveTuple ───────────────────────────────────────────────────
+  test("indirectLeftRecursiveTuple: should stack overflow on indirect left recursion") {
+    assertThrows[StackOverflowError] {
+      run(ParserPrograms.indirectLeftRecursiveTuple._1, "1xyx")
+    }
+  }
 }
 
 /** Runs the shared [[TokenParserTests]] against the memoizing packrat interpreter,
@@ -544,6 +551,16 @@ class SeedGrowingTokenParserTests extends TokenParserTests[TokenParser](SeedGrow
       case Failure(e) => fail(e.getMessage)
     }
   }
+
+  // ── indirectLeftRecursiveTuple ───────────────────────────────────────────────────
+  test("indirectLeftRecursiveTuple: parses an indirect left recursion") {
+    run(ParserPrograms.indirectLeftRecursiveTuple._1, "1xyx") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(((n)x)y)x"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
 }
 
 /** Runs the shared [[TokenParserTests]] against the seed-growing interpreter [[SeedGrowingTokenParserInterpreter]]. */
@@ -566,6 +583,16 @@ class SeedGrowingPackratTokenParserTests extends
   // ── indirectLeftRecursive ───────────────────────────────────────────────────
   test("indirectLeftRecursive: parses an indirect left recursion") {
     run(ParserPrograms.indirectLeftRecursive, "1xyx") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "(((n)x)y)x"): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  // ── indirectLeftRecursiveTuple ───────────────────────────────────────────────────
+  test("indirectLeftRecursiveTuple: parses an indirect left recursion") {
+    run(ParserPrograms.indirectLeftRecursiveTuple._1, "1xyx") match {
       case Success((remaining, parsed)) =>
         assert(parsed == "(((n)x)y)x"): Unit
         assert(remaining.isEmpty)
