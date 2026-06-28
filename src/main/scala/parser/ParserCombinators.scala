@@ -52,6 +52,23 @@ object ParserCombinators {
       greedy.orElse(P.success(List()))
     }
 
+    /** Applies `self` one or more times, separated by `separator`, collecting the results into a list.
+     *
+     * Runs `self`, then greedily runs `separator` followed by `self` as many times as possible,
+     * accumulating each `self` output. A trailing `separator` with no following `self` is left unconsumed.
+     *
+     * Fails if `self` does not match at least once.
+     *
+     * @param separator the parser that separates each application of `self`.
+     * @tparam Separator the result type produced by `separator`.
+     * @return a parser producing the non-empty list of `self` outputs.
+     */
+    def separatedBy[Separator](separator: Parser[Separator]): Parser[List[Output]] = {
+      self.andThen(separator.skipThen(self).repeated).map {
+        (head, tail) => head :: tail
+      }
+    }
+
     /** Applies `self` greedily, requiring at least `n` successful applications.
      *
      * Behaves like [[repeated]] but fails if `self` matches fewer than `n` times.
