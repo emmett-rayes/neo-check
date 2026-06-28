@@ -98,6 +98,14 @@ object ParserPrograms {
     P.literal("ab").repeated
   }
 
+  /** Matches `"ab"` exactly twice, collecting both matches.
+   *
+   * Exercises [[ParserCombinators.times]].
+   */
+  def twiceAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Literal]]] = {
+    P.literal("ab").times(2)
+  }
+
   /** Matches `"ab"` greedily, requiring at least two occurrences.
    *
    * Exercises [[ParserCombinators.atLeast]].
