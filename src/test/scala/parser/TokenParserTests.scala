@@ -210,6 +210,52 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
+  // ── commaSeparatedDigits ──────────────────────────────────────────────────
+
+  test("commaSeparatedDigits: matches a single digit group") {
+    run(ParserPrograms.commaSeparatedDigits, "42") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("42")): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("commaSeparatedDigits: matches multiple comma-separated digit groups") {
+    run(ParserPrograms.commaSeparatedDigits, "1,2,3") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("1", "2", "3")): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("commaSeparatedDigits: stops at the first non-matching element") {
+    run(ParserPrograms.commaSeparatedDigits, "10,20,abc") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("10", "20")): Unit
+        assert(remaining.mkString == ",abc")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("commaSeparatedDigits: handles whitespace around commas") {
+    run(ParserPrograms.commaSeparatedDigits, "5 , 6 , 7") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == List("5", "6", "7")): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("commaSeparatedDigits: fails when no leading digit is present") {
+    assert(run(ParserPrograms.commaSeparatedDigits, ",1,2").isFailure)
+  }
+
+  test("commaSeparatedDigits: fails on empty input") {
+    assert(run(ParserPrograms.commaSeparatedDigits, "").isFailure)
+  }
+
   // ── repeatedAb ────────────────────────────────────────────────────────────
 
   test("repeatedAb: yields an empty list on input that never matches") {
