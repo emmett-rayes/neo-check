@@ -44,6 +44,10 @@ trait PackratTransformer[Input](val underlying: ParserAlgebra[ParserF[Input]])
         }
       }
 
+      // cast safety:
+      // `ParserF` in T makes `Packrat[T]` produce `PackratParser`
+      // `Outputs` in T is the same as `Outputs` in the cast type
+      // `Input` in T is the same as `Input` in the cast type
       t.map([T] => (t: T) => packrat(t)).asInstanceOf[NamedTuple.Map[Outputs, PackratParserF[Input]]]
     }
 

@@ -20,9 +20,13 @@ trait NaiveRecursionInterpreter[Input] extends ParserAlgebra[ParserF[Input]] {
     lazy val rec: NamedTuple.Map[Outputs, ParserF[Input]] = {
       val parsers = Array.tabulate[Parser[Input, ?]](size.value) {
         i => {
+          // cast safety:
+          // `p(rec)` produces `Map[Outputs, ParserF[Input]]` which has `Parser[Input, _)]` at every position
           input => p(rec).toTuple.productElement(i).asInstanceOf[Parser[Input, ?]].parse(input)
         }
       }
+      // cast safety:
+      // `parsers` contains `Parser[Input, Outputs(i)]` at every position `i`
       Tuple.fromArray(parsers).asInstanceOf[NamedTuple.Map[Outputs, ParserF[Input]]]
     }
     rec
