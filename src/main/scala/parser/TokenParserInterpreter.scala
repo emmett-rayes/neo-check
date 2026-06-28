@@ -12,11 +12,6 @@ type TokenParser[Output] = Parser[Tokens, Output]
 
 /** A partial implementation of an interpreter of [[ParserAlgebra]] for [[TokenParser]]. */
 trait TokenParserInterpreter extends ParserInterpreter[Tokens] {
-  override type Output[K <: ParserKind] = K match {
-    case ParserKind.Literal => String
-    case ParserKind.Regex => String
-  }
-
   override def literal(expected: String): TokenParser[String] = {
     input => {
       Try {

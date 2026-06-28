@@ -13,15 +13,13 @@ import parser.ParserCombinators.*
  */
 object ParserPrograms {
 
-  import ParserKind.*
-
   /** Matches the single literal word `"hello"`. */
-  def literalHello[Parser[_]](using P: ParserAlgebra[Parser]): Parser[P.Output[Literal]] = {
+  def literalHello[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
     P.literal("hello")
   }
 
   /** Matches a non-empty run of digits via a regular expression. */
-  def regexDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[P.Output[Regex]] = {
+  def regexDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
     P.regex("[0-9]+".r)
   }
 
@@ -46,7 +44,7 @@ object ParserPrograms {
    * Exercises sequencing via [[ParserCombinators.andThen]] (and hence `flatMap`).
    */
   def helloThenWorld[Parser[_]](using P: ParserAlgebra[Parser])
-  : Parser[(P.Output[Literal], P.Output[Literal])] = {
+  : Parser[(String, String)] = {
     P.literal("hello").andThen(P.literal("world"))
   }
 
@@ -54,7 +52,7 @@ object ParserPrograms {
    *
    * Exercises alternation via [[ParserAlgebra.orElse]].
    */
-  def trueOrFalse[Parser[_]](using P: ParserAlgebra[Parser]): Parser[P.Output[Literal]] = {
+  def trueOrFalse[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
     P.literal("true").orElse(P.literal("false"))
   }
 
@@ -78,7 +76,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.optional]].
    */
-  def optionalDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[Option[P.Output[Regex]]] = {
+  def optionalDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[Option[String]] = {
     P.regex("[0-9]+".r).optional
   }
 
@@ -86,7 +84,7 @@ object ParserPrograms {
    *
    * Exercises the separator-based [[ParserCombinators.repeated]] overload.
    */
-  def commaSeparatedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Regex]]] = {
+  def commaSeparatedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[String]] = {
     P.regex("[0-9]+".r).separatedBy(P.literal(","))
   }
 
@@ -94,7 +92,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.repeated]].
    */
-  def repeatedAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Literal]]] = {
+  def repeatedAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[String]] = {
     P.literal("ab").repeated
   }
 
@@ -102,7 +100,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.times]].
    */
-  def twiceAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Literal]]] = {
+  def twiceAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[String]] = {
     P.literal("ab").times(2)
   }
 
@@ -110,7 +108,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.atLeast]].
    */
-  def atLeastTwoAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Literal]]] = {
+  def atLeastTwoAb[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[String]] = {
     P.literal("ab").atLeast(2)
   }
 
@@ -118,7 +116,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.between]].
    */
-  def digitsInParens[Parser[_]](using P: ParserAlgebra[Parser]): Parser[P.Output[Regex]] = {
+  def digitsInParens[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
     P.regex("[0-9]+".r).between(P.literal("("), P.literal(")"))
   }
 
@@ -126,7 +124,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.skipThen]].
    */
-  def prefixedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[P.Output[Regex]] = {
+  def prefixedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
     P.literal(">").skipThen(P.regex("[0-9]+".r))
   }
 
@@ -134,7 +132,7 @@ object ParserPrograms {
    *
    * Exercises [[ParserCombinators.thenSkip]].
    */
-  def terminatedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[P.Output[Regex]] = {
+  def terminatedDigits[Parser[_]](using P: ParserAlgebra[Parser]): Parser[String] = {
     P.regex("[0-9]+".r).thenSkip(P.literal(";"))
   }
 
@@ -144,7 +142,7 @@ object ParserPrograms {
    * `repeated`, `skipThen`, `between`, `map`) into a single non-trivial program,
    * yielding the list of digit groups in order.
    */
-  def digitListInParens[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[P.Output[Regex]]] = {
+  def digitListInParens[Parser[_]](using P: ParserAlgebra[Parser]): Parser[List[String]] = {
     val digits = P.regex("[0-9]+".r)
     val tail = P.literal(",").skipThen(digits).repeated
     val list = digits.andThen(tail).map((head, rest) => head :: rest)

@@ -12,12 +12,10 @@ import scala.util.matching.Regex
 trait PackratTransformer[Input](val underlying: ParserAlgebra[ParserF[Input]])
   extends ParserAlgebra[PackratParserF[Input]] {
 
-  override type Output[K <: ParserKind] = underlying.Output[K]
-
-  override def literal(expected: String): PackratParser[Input, Output[ParserKind.Literal]] =
+  override def literal(expected: String): PackratParser[Input, String] =
     PackratParser(underlying.literal(expected))
 
-  override def regex(expected: Regex): PackratParser[Input, Output[ParserKind.Regex]] =
+  override def regex(expected: Regex): PackratParser[Input, String] =
     PackratParser(underlying.regex(expected))
 
   override def success[Output](output: Output): PackratParser[Input, Output] =

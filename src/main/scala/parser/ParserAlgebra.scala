@@ -9,26 +9,19 @@ import scala.util.matching.Regex
  * @tparam Parser the higher-kinded type of the parser.
  */
 trait ParserAlgebra[Parser[_]] {
-  /** A type-level mapping from a [[ParserKind]] to the corresponding output
-   * type produced by a parser of that base kind.
-   *
-   * @tparam K the kind of parser whose output type is being resolved.
-   */
-  type Output[K <: ParserKind]
-
   /** Creates a parser that matches a literal string.
    *
    * @param expected the literal string to match.
    * @return a parser that produces the matched literal string.
    */
-  def literal(expected: String): Parser[Output[ParserKind.Literal]]
+  def literal(expected: String): Parser[String]
 
   /** Creates a parser that matches a regular expression.
    *
    * @param expected the regular expression to match.
    * @return a parser that produces the matched regular expression.
    */
-  def regex(expected: Regex): Parser[Output[ParserKind.Regex]]
+  def regex(expected: Regex): Parser[String]
 
   /** Creates a parser that always succeeds with the given output, consuming no input.
    *

@@ -7,9 +7,6 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
-/** Length-based ordering on [[Tokens]], required to mix in [[SeedGrowingRecursionInterpreter]]. */
-private given Ordering[Tokens] = Ordering.by(_.length)
-
 /** A seed-growing token interpreter that counts how many times its primitive parsers are actually run.
  *
  * The counters observe work performed by the underlying `literal`/`regex` parsers.
