@@ -165,6 +165,51 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     assert(run(ParserPrograms.trueOrFalse, "").isFailure)
   }
 
+  // ── optionalDigits ────────────────────────────────────────────────────────
+
+  test("optionalDigits: succeeds with Some when digits are present") {
+    run(ParserPrograms.optionalDigits, "123") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == Some("123")): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("optionalDigits: succeeds with None when digits are absent") {
+    run(ParserPrograms.optionalDigits, "abc") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == None): Unit
+        assert(remaining.mkString == "abc")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("optionalDigits: succeeds with None on empty input") {
+    run(ParserPrograms.optionalDigits, "") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == None): Unit
+        assert(remaining.isEmpty)
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("optionalDigits: leaves trailing non-digit characters unconsumed") {
+    run(ParserPrograms.optionalDigits, "42xyz") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == Some("42")): Unit
+        assert(remaining.mkString == "xyz")
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
+  test("optionalDigits: handles whitespace before digits") {
+    run(ParserPrograms.optionalDigits, "  555") match {
+      case Success((_, parsed)) => assert(parsed == Some("555"))
+      case Failure(e) => fail(e.getMessage)
+    }
+  }
+
   // ── repeatedAb ────────────────────────────────────────────────────────────
 
   test("repeatedAb: yields an empty list on input that never matches") {
