@@ -10,7 +10,7 @@ import scala.util.matching.Regex
  */
 type TokenParser[Output] = Parser[Tokens, Output]
 
-/** An interpreter of [[ParserAlgebra]] for [[TokenParser]]. */
+/** A partial implementation of an interpreter of [[ParserAlgebra]] for [[TokenParser]]. */
 trait TokenParserInterpreter extends ParserInterpreter[Tokens] {
   override type Output[K <: ParserKind] = K match {
     case ParserKind.Literal => String
@@ -19,11 +19,10 @@ trait TokenParserInterpreter extends ParserInterpreter[Tokens] {
 
   override def literal(expected: String): TokenParser[String] = {
     input => {
-      val trimmed = input.skipWhitespace
       Try {
-        if !trimmed.startsWith(expected.asTokens) then
-          throw ParserError(input, s"Expected $expected at this position $trimmed.")
-        trimmed.splitAt(expected.length) match {
+        if !input.startsWith(expected.asTokens) then
+          throw ParserError(input, s"Expected $expected at this position $input.")
+        input.splitAt(expected.length) match {
           case (matched, remaining) => (remaining, matched.mkString)
         }
       }
@@ -32,13 +31,10 @@ trait TokenParserInterpreter extends ParserInterpreter[Tokens] {
 
   override def regex(expected: Regex): TokenParser[String] = {
     input => {
-      val trimmed = input.skipWhitespace
       Try {
-        if trimmed.isEmpty then
-          throw ParserError(input, "Expected input at this position.")
-        expected.findPrefixMatchOf(trimmed.mkString) match {
-          case None => throw ParserError(input, s"Expected a matching for ${expected.regex} at this position $trimmed.")
-          case Some(m) => (trimmed.mkString.substring(m.end), trimmed.mkString.substring(m.start, m.end))
+        expected.findPrefixMatchOf(input.mkString) match {
+          case None => throw ParserError(input, s"Expected a matching for ${expected.regex} at this position $input.")
+          case Some(m) => (input.mkString.substring(m.end), input.mkString.substring(m.start, m.end))
         }
       }
     }

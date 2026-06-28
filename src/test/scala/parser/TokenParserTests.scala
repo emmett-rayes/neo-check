@@ -29,11 +29,8 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
-  test("literalHello: skips leading whitespace before matching") {
-    run(ParserPrograms.literalHello, "  hello") match {
-      case Success((_, parsed)) => assert(parsed == "hello")
-      case Failure(e) => fail(e.getMessage)
-    }
+  test("literalHello: does not skip leading whitespace") {
+    assert(run(ParserPrograms.literalHello, "  hello").isFailure)
   }
 
   test("literalHello: leaves trailing input unconsumed") {
@@ -124,13 +121,8 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
-  test("helloThenWorld: handles whitespace between the two tokens") {
-    run(ParserPrograms.helloThenWorld, "hello world") match {
-      case Success((_, (h, w))) =>
-        assert(h == "hello"): Unit
-        assert(w == "world")
-      case Failure(e) => fail(e.getMessage)
-    }
+  test("helloThenWorld: does not tolerate whitespace between the two tokens") {
+    assert(run(ParserPrograms.helloThenWorld, "hello world").isFailure)
   }
 
   test("helloThenWorld: fails when 'world' is absent") {
@@ -190,7 +182,7 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     assert(run(ParserPrograms.notDigit, "9abc").isFailure)
   }
 
-  test("notDigit: after whitespace skipping, succeeds if the next non-whitespace character is not a digit") {
+  test("notDigit: succeeds when the next character is whitespace, consuming nothing") {
     run(ParserPrograms.notDigit, "  a") match {
       case Success((remaining, _)) =>
         assert(remaining.mkString == "  a")
@@ -281,9 +273,11 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
-  test("optionalDigits: handles whitespace before digits") {
+  test("optionalDigits: yields None when leading whitespace precedes the digits") {
     run(ParserPrograms.optionalDigits, "  555") match {
-      case Success((_, parsed)) => assert(parsed == Some("555"))
+      case Success((remaining, parsed)) =>
+        assert(parsed == None): Unit
+        assert(remaining.mkString == "  555")
       case Failure(e) => fail(e.getMessage)
     }
   }
@@ -317,11 +311,11 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
-  test("commaSeparatedDigits: handles whitespace around commas") {
+  test("commaSeparatedDigits: does not span whitespace around commas") {
     run(ParserPrograms.commaSeparatedDigits, "5 , 6 , 7") match {
       case Success((remaining, parsed)) =>
-        assert(parsed == List("5", "6", "7")): Unit
-        assert(remaining.isEmpty)
+        assert(parsed == List("5")): Unit
+        assert(remaining.mkString == " , 6 , 7")
       case Failure(e) => fail(e.getMessage)
     }
   }
@@ -406,11 +400,8 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
-  test("digitsInParens: handles whitespace before '('") {
-    run(ParserPrograms.digitsInParens, "  (456)") match {
-      case Success((_, parsed)) => assert(parsed == "456")
-      case Failure(e) => fail(e.getMessage)
-    }
+  test("digitsInParens: does not skip whitespace before '('") {
+    assert(run(ParserPrograms.digitsInParens, "  (456)").isFailure)
   }
 
   test("digitsInParens: fails when parentheses are absent") {
@@ -631,11 +622,8 @@ abstract class TokenParserTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
     }
   }
 
-  test("additiveExpression: tolerates whitespace around terms and '+'") {
-    run(ParserPrograms.additiveExpression, "  1 + 2 + 3 ") match {
-      case Success((_, parsed)) => assert(parsed == "((n+n)+n)")
-      case Failure(e) => fail(e.getMessage)
-    }
+  test("additiveExpression: does not tolerate whitespace around terms and '+'") {
+    assert(run(ParserPrograms.additiveExpression, "  1 + 2 + 3 ").isFailure)
   }
 
   test("additiveExpression: fails when no leading term is present") {
