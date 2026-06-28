@@ -1,7 +1,6 @@
 package neocheck
 package parser
 
-import scala.Tuple.Size
 import scala.compiletime.asMatchable
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.{Failure, Success}
@@ -34,11 +33,12 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
     input => loop(seed, seed.parse(input))(input)
   }
 
-  override def recursive[Outputs <: Tuple](p: Tuple.Map[Outputs, ParserF[Input]] => Tuple.Map[Outputs, ParserF[Input]])
-                                          (using size: ValueOf[Size[Outputs]]): Tuple.Map[Outputs, ParserF[Input]] = {
+  override def recursive[Outputs <: NamedTuple.AnyNamedTuple]
+                        (p: NamedTuple.Map[Outputs, ParserF[Input]] => NamedTuple.Map[Outputs, ParserF[Input]])
+                        (using size: ValueOf[NamedTuple.Size[Outputs]]): NamedTuple.Map[Outputs, ParserF[Input]] = {
     type ParserResultF = [Output] =>> ParserResult[Input, Output]
 
-    def parse(parsers: Tuple.Map[Outputs, ParserF[Input]], input: Input): Tuple.Map[Outputs, ParserResultF] = {
+    def parse(parsers: NamedTuple.Map[Outputs, ParserF[Input]], input: Input): NamedTuple.Map[Outputs, ParserResultF] = {
       type Result[T] = T match {
         case Parser[Input, output] => ParserResult[Input, output]
       }
@@ -49,10 +49,10 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
         }
       }
 
-      parsers.map([T] => (t: T) => result(t)).asInstanceOf[Tuple.Map[Outputs, ParserResultF]]
+      parsers.map([T] => (t: T) => result(t)).asInstanceOf[NamedTuple.Map[Outputs, ParserResultF]]
     }
 
-    def improved(best: Tuple.Map[Outputs, ParserResultF], result: Tuple.Map[Outputs, ParserResultF]): Boolean = {
+    def improved(best: NamedTuple.Map[Outputs, ParserResultF], result: NamedTuple.Map[Outputs, ParserResultF]): Boolean = {
       def matchMap[T](t: T): Boolean = {
         val (best, result) = t.asInstanceOf[(ParserResult[Input, Any], ParserResult[Input, Any])]
         (best, result) match {
@@ -66,20 +66,20 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
     }
 
     @annotation.tailrec
-    def loop(current: Tuple.Map[Outputs, ParserF[Input]], best: Tuple.Map[Outputs, ParserResultF])(input: Input): Tuple.Map[Outputs, ParserResultF] = {
+    def loop(current: NamedTuple.Map[Outputs, ParserF[Input]], best: NamedTuple.Map[Outputs, ParserResultF])(input: Input): NamedTuple.Map[Outputs, ParserResultF] = {
       val next = p(current)
       val result = parse(next, input)
       if improved(best, result) then loop(next, result)(input) else best
     }
 
     val seeds = Tuple.fromArray(Array.fill(size.value)(failure("left recursion seed")))
-      .asInstanceOf[Tuple.Map[Outputs, ParserF[Input]]]
+      .asInstanceOf[NamedTuple.Map[Outputs, ParserF[Input]]]
 
     val parsers = Array.tabulate[Parser[Input, ?]](size.value) {
       i => {
-        input => loop(seeds, parse(seeds, input))(input).productElement(i).asInstanceOf[ParserResult[Input, Any]]
+        input => loop(seeds, parse(seeds, input))(input).toTuple.productElement(i).asInstanceOf[ParserResult[Input, Any]]
       }
     }
-    Tuple.fromArray(parsers).asInstanceOf[Tuple.Map[Outputs, ParserF[Input]]]
+    Tuple.fromArray(parsers).asInstanceOf[NamedTuple.Map[Outputs, ParserF[Input]]]
   }
 }

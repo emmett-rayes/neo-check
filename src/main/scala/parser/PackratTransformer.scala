@@ -1,7 +1,6 @@
 package neocheck
 package parser
 
-import scala.Tuple.Size
 import scala.compiletime.asMatchable
 import scala.util.matching.Regex
 
@@ -30,11 +29,11 @@ trait PackratTransformer[Input](val underlying: ParserAlgebra[ParserF[Input]])
   override def recursive[Output](p: PackratParser[Input, Output] => PackratParser[Input, Output]): PackratParser[Input, Output] =
     PackratParser(underlying.recursive(self => p(PackratParser(self))))
 
-  override def recursive[Outputs <: Tuple]
-                        (p: Tuple.Map[Outputs, PackratParserF[Input]] => Tuple.Map[Outputs, PackratParserF[Input]])
-                        (using size: ValueOf[Size[Outputs]]): Tuple.Map[Outputs, PackratParserF[Input]] = {
+  override def recursive[Outputs <: NamedTuple.AnyNamedTuple]
+                        (p: NamedTuple.Map[Outputs, PackratParserF[Input]] => NamedTuple.Map[Outputs, PackratParserF[Input]])
+                        (using size: ValueOf[NamedTuple.Size[Outputs]]): NamedTuple.Map[Outputs, PackratParserF[Input]] = {
 
-    def packratParser(t: Tuple.Map[Outputs, ParserF[Input]]): Tuple.Map[Outputs, PackratParserF[Input]] = {
+    def packratParser(t: NamedTuple.Map[Outputs, ParserF[Input]]): NamedTuple.Map[Outputs, PackratParserF[Input]] = {
       type Packrat[T] = T match {
         case Parser[input, output] => PackratParser[input, output]
       }
@@ -45,11 +44,10 @@ trait PackratTransformer[Input](val underlying: ParserAlgebra[ParserF[Input]])
         }
       }
 
-      t.map([T] => (t: T) => packrat(t)).asInstanceOf[Tuple.Map[Outputs, PackratParserF[Input]]]
+      t.map([T] => (t: T) => packrat(t)).asInstanceOf[NamedTuple.Map[Outputs, PackratParserF[Input]]]
     }
 
-    packratParser(underlying.recursive[Outputs](selfs =>
-      p(packratParser(selfs)).asInstanceOf[Tuple.Map[Outputs, ParserF[Input]]]))
+    packratParser(underlying.recursive[Outputs](selfs => p(packratParser(selfs))))
   }
 
   extension [Output](self: PackratParser[Input, Output]) {

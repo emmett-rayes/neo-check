@@ -511,7 +511,7 @@ class NaiveTokenParserTests extends TokenParserTests[TokenParser](NaiveTokenPars
   // ── indirectLeftRecursiveTuple ───────────────────────────────────────────────────
   test("indirectLeftRecursiveTuple: should stack overflow on indirect left recursion") {
     assertThrows[StackOverflowError] {
-      run(ParserPrograms.indirectLeftRecursiveTuple._1, "1xyx")
+      run(ParserPrograms.indirectLeftRecursiveTuple.a, "1xyx")
     }
   }
 }
@@ -554,12 +554,19 @@ class SeedGrowingTokenParserTests extends TokenParserTests[TokenParser](SeedGrow
 
   // ── indirectLeftRecursiveTuple ───────────────────────────────────────────────────
   test("indirectLeftRecursiveTuple: parses an indirect left recursion") {
-    run(ParserPrograms.indirectLeftRecursiveTuple._1, "1xyx") match {
+    run(ParserPrograms.indirectLeftRecursiveTuple.a, "1xyx") match {
       case Success((remaining, parsed)) =>
         assert(parsed == "(((n)x)y)x"): Unit
-        assert(remaining.isEmpty)
+        assert(remaining.isEmpty): Unit
       case Failure(e) => fail(e.getMessage)
-    }
+    }: Unit
+    run(ParserPrograms.indirectLeftRecursiveTuple.b, "1xyx") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "((n)x)y"): Unit
+        assert(remaining.nonEmpty): Unit
+        assert(remaining.mkString == "x"): Unit
+      case Failure(e) => fail(e.getMessage)
+    }: Unit
   }
 }
 
@@ -592,11 +599,18 @@ class SeedGrowingPackratTokenParserTests extends
 
   // ── indirectLeftRecursiveTuple ───────────────────────────────────────────────────
   test("indirectLeftRecursiveTuple: parses an indirect left recursion") {
-    run(ParserPrograms.indirectLeftRecursiveTuple._1, "1xyx") match {
+    run(ParserPrograms.indirectLeftRecursiveTuple.a, "1xyx") match {
       case Success((remaining, parsed)) =>
         assert(parsed == "(((n)x)y)x"): Unit
-        assert(remaining.isEmpty)
+        assert(remaining.isEmpty): Unit
       case Failure(e) => fail(e.getMessage)
-    }
+    }: Unit
+    run(ParserPrograms.indirectLeftRecursiveTuple.b, "1xyx") match {
+      case Success((remaining, parsed)) =>
+        assert(parsed == "((n)x)y"): Unit
+        assert(remaining.nonEmpty): Unit
+        assert(remaining.mkString == "x"): Unit
+      case Failure(e) => fail(e.getMessage)
+    }: Unit
   }
 }

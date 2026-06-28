@@ -59,15 +59,20 @@ trait ParserAlgebra[Parser[_]] {
    */
   def recursive[Output](p: Parser[Output] => Parser[Output]): Parser[Output]
 
-  /** Creates a tuple of recursive parsers by passing themselves to the given function `p`.
+  /** Creates a named tuple of recursive parsers by passing themselves to the given function `p`.
    *
-   * This functions as the least fixed point operation of the parser algebra lifted to tuples.
+   * This functions as the least fixed point operation of the parser algebra lifted to named tuples.
+   * The names of `Outputs` are preserved on the resulting parsers, allowing mutually recursive
+   * parsers to be referred to by label rather than by position.
    *
-   * @param p a function that takes a tuple of parsers and returns a new tuple of parsers, potentially using the input parsers recursively.
-   * @return a tuple of parsers that can be defined recursively using `p`.
+   * @param p a function that takes a named tuple of parsers and returns a new named tuple of parsers,
+   *          potentially using the input parsers recursively.
+   *
+   * @return a named tuple of parsers that can be defined recursively using `p`.
    */
-  def recursive[Outputs <: Tuple](p: Tuple.Map[Outputs, Parser] => Tuple.Map[Outputs, Parser])
-                                 (using size: ValueOf[Tuple.Size[Outputs]]): Tuple.Map[Outputs, Parser]
+  def recursive[Outputs <: NamedTuple.AnyNamedTuple]
+  (p: NamedTuple.Map[Outputs, Parser] => NamedTuple.Map[Outputs, Parser])
+  (using size: ValueOf[NamedTuple.Size[Outputs]]): NamedTuple.Map[Outputs, Parser]
 
   /** Parser algebra operations available on any [[Parser]].
    *

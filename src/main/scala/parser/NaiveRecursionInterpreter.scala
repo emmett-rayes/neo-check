@@ -1,7 +1,6 @@
 package neocheck
 package parser
 
-import scala.Tuple.Size
 
 /** A partial implementation of an interpreter of [[ParserAlgebra]] for [[Parser]].
  *
@@ -15,15 +14,16 @@ trait NaiveRecursionInterpreter[Input] extends ParserAlgebra[ParserF[Input]] {
     rec
   }
 
-  override def recursive[Outputs <: Tuple](p: Tuple.Map[Outputs, ParserF[Input]] => Tuple.Map[Outputs, ParserF[Input]])
-                                          (using size: ValueOf[Size[Outputs]]): Tuple.Map[Outputs, ParserF[Input]] = {
-    lazy val rec: Tuple.Map[Outputs, ParserF[Input]] = {
+  override def recursive[Outputs <: NamedTuple.AnyNamedTuple]
+                        (p: NamedTuple.Map[Outputs, ParserF[Input]] => NamedTuple.Map[Outputs, ParserF[Input]])
+                        (using size: ValueOf[NamedTuple.Size[Outputs]]): NamedTuple.Map[Outputs, ParserF[Input]] = {
+    lazy val rec: NamedTuple.Map[Outputs, ParserF[Input]] = {
       val parsers = Array.tabulate[Parser[Input, ?]](size.value) {
         i => {
-          input => p(rec).productElement(i).asInstanceOf[Parser[Input, ?]].parse(input)
+          input => p(rec).toTuple.productElement(i).asInstanceOf[Parser[Input, ?]].parse(input)
         }
       }
-      Tuple.fromArray(parsers).asInstanceOf[Tuple.Map[Outputs, ParserF[Input]]]
+      Tuple.fromArray(parsers).asInstanceOf[NamedTuple.Map[Outputs, ParserF[Input]]]
     }
     rec
   }

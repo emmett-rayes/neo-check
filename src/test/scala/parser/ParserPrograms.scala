@@ -202,13 +202,14 @@ object ParserPrograms {
    * @note This grammar is defined using the algebra's tuple-based recursion,
    *       which allows both parsers to be memoized and avoids the host language's recursion.
    */
-  def indirectLeftRecursiveTuple[Parser[_]](using P: ParserAlgebra[Parser]): (Parser[String], Parser[String]) = {
+  def indirectLeftRecursiveTuple[Parser[_]](using P: ParserAlgebra[Parser]): (a: Parser[String], b: Parser[String]) = {
     val term = P.regex("[0-9]+".r).map(_ => "n")
-    P.recursive[(String, String)] { case (a, b) =>
-      (
-        b.thenSkip(P.literal("x")).map(left => s"($left)x").orElse(term),
-        a.thenSkip(P.literal("y")).map(left => s"($left)y").orElse(term),
-      )
+    P.recursive[(a: String, b: String)] {
+      case (a = a, b = b) =>
+        (
+          a = b.thenSkip(P.literal("x")).map(left => s"($left)x").orElse(term),
+          b = a.thenSkip(P.literal("y")).map(left => s"($left)y").orElse(term),
+        )
     }
   }
 }
