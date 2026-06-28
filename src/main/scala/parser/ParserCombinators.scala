@@ -87,10 +87,31 @@ object ParserCombinators {
      *         than `n` applications succeed.
      */
     def atLeast(n: Int): Parser[List[Output]] = {
+      require(n >= 0, "n must be non-negative")
       self.repeated.flatMap { outputs =>
         if outputs.size >= n then P.success(outputs)
         else P.failure(s"Expected at least ${n - outputs.size} more element(s) after ${outputs.mkString}.")
       }
+    }
+
+    /** Applies `self` exactly `n` times, collecting the results into a list.
+     *
+     * Behaves like `self` sequenced with itself `n` times.
+     * If input runs out before the `n`th application succeeds, the parser fails.
+     * Otherwise, it does not consume any input after the `n`th application.
+     *
+     * @param n the exact number of successful applications required.
+     * @return a parser producing the list of outputs, or a failure if fewer than `n` applications succeed.
+     */
+    def times(n: Int): Parser[List[Output]] = {
+      require(n >= 0, "n must be non-negative")
+      if n == 0 then P.success(List())
+      else
+        for
+          // orElse only swaps in a count-based message; it does not change success/failure.
+          selfOutput <- self.orElse(P.failure[Output](s"Expected $n more element(s)."))
+          otherOutputs <- self.times(n - 1)
+        yield selfOutput :: otherOutputs
     }
 
     /** Sequences `self` with `other`, pairing both results.
