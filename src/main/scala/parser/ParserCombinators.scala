@@ -26,6 +26,14 @@ object ParserCombinators {
       self.flatMap { a => P.success(f(a)) }
     }
 
+    /** Tries to apply `self`, returning `Some` of its output if it succeeds, or `None` if it fails.
+     *
+     * @return a parser that produces an `Option` of the output of `self`.
+     */
+    def optional: Parser[Option[Output]] = {
+      self.map(Some(_)).orElse(P.success(None))
+    }
+
     /** Applies `self` greedily as many times as possible, collecting the results into a list.
      *
      * Repeatedly runs `self`, accumulating each output, until it no longer succeeds,
