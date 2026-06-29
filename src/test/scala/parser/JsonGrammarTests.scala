@@ -84,7 +84,7 @@ abstract class JsonGrammarTests[Parser[_]](interpreter: ParserAlgebra[Parser]) e
 
 class PackratJsonGrammarTests
     extends JsonGrammarTests[PackratParserF[Tokens]](
-      new PackratTransformer[Tokens](SeedGrowingTokenParserInterpreter()) {}
+      new PackratTransformer[Tokens](KleeneTokenParserInterpreter()) {}
     ) {
   override protected def run[A](program: PackratParser[Tokens, A], input: String): ParserResult[Tokens, A] =
     program.parse(input.asTokens)

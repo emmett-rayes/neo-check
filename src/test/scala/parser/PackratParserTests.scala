@@ -7,14 +7,14 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
-/** A seed-growing token interpreter that counts how many times its primitive parsers are actually run.
+/** A kleene token interpreter that counts how many times its primitive parsers are actually run.
  *
  * The counters observe work performed by the underlying `literal`/`regex` parsers.
  * When this interpreter is wrapped by a [[PackratTransformer]], the memoization layer sits above these primitives,
- * so the counters reveal exactly how much redundant primitive work the packrat memo eliminates during seed growing.
+ * so the counters reveal exactly how much redundant primitive work the packrat memo eliminates during kleene iteration.
  */
-private final class CountingSeedGrowingInterpreter
-  extends TokenParserInterpreter, SeedGrowingRecursionInterpreter[Tokens] {
+private final class CountingKleeneInterpreter
+  extends TokenParserInterpreter, KleeneRecursionInterpreter[Tokens] {
 
   var literalParses = 0
   var regexParses = 0
@@ -39,7 +39,7 @@ private final class CountingSeedGrowingInterpreter
 }
 
 /** Unit tests for the memoization behaviour of [[PackratParser]] and the [[PackratTransformer]],
- * both on their own and layered on top of the seed-growing interpreter.
+ * both on their own and layered on top of the kleene interpreter.
  */
 class PackratParserTests extends AnyFunSuite {
 
@@ -71,10 +71,10 @@ class PackratParserTests extends AnyFunSuite {
     assert(calls == 2)
   }
 
-  // ── seed-growing packrat memoization ──────────────────────────────────────
+  // ── kleene packrat memoization ──────────────────────────────────────
 
-  test("SeedGrowingPackratParser: re-parsing the same input reuses the grown result without any further primitive work") {
-    val underlying = CountingSeedGrowingInterpreter()
+  test("KleenePackratParser: re-parsing the same input reuses the grown result without any further primitive work") {
+    val underlying = CountingKleeneInterpreter()
     val packrat = new PackratTransformer[Tokens](underlying) {}
     val program = ParserPrograms.leftRecursive(using packrat)
 
@@ -89,11 +89,11 @@ class PackratParserTests extends AnyFunSuite {
     assert(underlying.literalParses == literalAfterFirst)
   }
 
-  test("SeedGrowingPackratParser: memoization eliminates the redundant sub-parses that seed growing would otherwise repeat") {
-    val plain = CountingSeedGrowingInterpreter()
+  test("KleenePackratParser: memoization eliminates the redundant sub-parses that kleene iteration would otherwise repeat") {
+    val plain = CountingKleeneInterpreter()
     ParserPrograms.leftRecursive(using plain).parse("1+2+3".asTokens): Unit
 
-    val underlying = CountingSeedGrowingInterpreter()
+    val underlying = CountingKleeneInterpreter()
     val packrat = new PackratTransformer[Tokens](underlying) {}
     ParserPrograms.leftRecursive(using packrat).parse("1+2+3".asTokens): Unit
 
@@ -101,18 +101,18 @@ class PackratParserTests extends AnyFunSuite {
     assert(underlying.literalParses < plain.literalParses)
   }
 
-  test("SeedGrowingPackratParser: each input position is parsed once despite the seed-growing loop re-running the grammar") {
-    val underlying = CountingSeedGrowingInterpreter()
+  test("KleenePackratParser: each input position is parsed once despite kleene iteration loop re-running the grammar") {
+    val underlying = CountingKleeneInterpreter()
     val packrat = new PackratTransformer[Tokens](underlying) {}
     ParserPrograms.leftRecursive(using packrat).parse("1+2+3".asTokens): Unit
 
     // "1+2+3" has three numeric terms; memoization means the term parser runs exactly once per position,
-    // even though seed growing applies the grammar repeatedly to grow the left-recursive result.
+    // even though kleene interation applies the grammar repeatedly to grow the left-recursive result.
     assert(underlying.regexParses == 3)
   }
 
-  test("SeedGrowingPackratParser: distinct inputs are grown and memoized independently") {
-    val underlying = CountingSeedGrowingInterpreter()
+  test("KleenePackratParser: distinct inputs are grown and memoized independently") {
+    val underlying = CountingKleeneInterpreter()
     val packrat = new PackratTransformer[Tokens](underlying) {}
     val program = ParserPrograms.leftRecursive(using packrat)
 
@@ -136,8 +136,8 @@ class PackratParserTests extends AnyFunSuite {
     assert(underlying.regexParses > regexAfterFirstInput)
   }
 
-  test("SeedGrowingPackratParser: the inner parser 'b' of indirectLeftRecursive is not memoized") {
-    val underlying = CountingSeedGrowingInterpreter()
+  test("KleenePackratParser: the inner parser 'b' of indirectLeftRecursive is not memoized") {
+    val underlying = CountingKleeneInterpreter()
     val packrat = new PackratTransformer[Tokens](underlying) {}
 
     ParserPrograms.indirectLeftRecursive(using packrat).parse("1xyx".asTokens) match {
@@ -148,7 +148,7 @@ class PackratParserTests extends AnyFunSuite {
     }
 
     // `term` is built once, outside `P.recursive`, so the packrat layer memoizes it: the single numeric
-    // term in "1xyx" is parsed exactly once across the whole seed-growing process.
+    // term in "1xyx" is parsed exactly once across the whole kleene iteration process.
     assert(underlying.regexParses == 1): Unit
 
     // `b` is rebuilt via host-language recursion on every growth iteration (`val b = ...` inside the body),
@@ -158,13 +158,13 @@ class PackratParserTests extends AnyFunSuite {
     assert(underlying.literalParsesByExpected("y") > 1)
   }
 
-  test("SeedGrowingPackratParser: the parsers 'a' and 'b' of indirectLeftRecursiveTuple are memoized") {
-    val plain = CountingSeedGrowingInterpreter()
+  test("KleenePackratParser: the parsers 'a' and 'b' of indirectLeftRecursiveTuple are memoized") {
+    val plain = CountingKleeneInterpreter()
     val plainParsers = ParserPrograms.indirectLeftRecursiveTuple(using plain)
     plainParsers.a.parse("1xyx".asTokens): Unit
     plainParsers.b.parse("1xyx".asTokens): Unit
 
-    val underlying = CountingSeedGrowingInterpreter()
+    val underlying = CountingKleeneInterpreter()
     val packrat = new PackratTransformer[Tokens](underlying) {}
     val packratParsers = ParserPrograms.indirectLeftRecursiveTuple(using packrat)
     packratParsers.a.parse("1xyx".asTokens): Unit

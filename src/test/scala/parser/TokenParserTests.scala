@@ -719,8 +719,8 @@ class PackratTokenParserTests
     program.parse(input.asTokens)
 }
 
-/** Runs the shared [[TokenParserTests]] against the seed-growing interpreter [[SeedGrowingTokenParserInterpreter]]. */
-class SeedGrowingTokenParserTests extends TokenParserTests[TokenParser](SeedGrowingTokenParserInterpreter()) {
+/** Runs the shared [[TokenParserTests]] against the kleene interpreter [[KleeneTokenParserInterpreter]]. */
+class KleeneTokenParserTests extends TokenParserTests[TokenParser](KleeneTokenParserInterpreter()) {
 
   override protected def run[A](program: TokenParser[A], input: String): ParserResult[Tokens, A] =
     program.parse(input.asTokens)
@@ -763,9 +763,9 @@ class SeedGrowingTokenParserTests extends TokenParserTests[TokenParser](SeedGrow
   }
 }
 
-/** Runs the shared [[TokenParserTests]] against the seed-growing interpreter [[SeedGrowingTokenParserInterpreter]]. */
-class SeedGrowingPackratTokenParserTests extends
-  TokenParserTests[PackratParserF[Tokens]](new PackratTransformer[Tokens](SeedGrowingTokenParserInterpreter()) {}) {
+/** Runs the shared [[TokenParserTests]] against the kleene interpreter [[KleeneTokenParserInterpreter]]. */
+class KleenePackratTokenParserTests extends
+  TokenParserTests[PackratParserF[Tokens]](new PackratTransformer[Tokens](KleeneTokenParserInterpreter()) {}) {
 
   override protected def run[A](program: PackratParser[Tokens, A], input: String): ParserResult[Tokens, A] =
     program.parse(input.asTokens)

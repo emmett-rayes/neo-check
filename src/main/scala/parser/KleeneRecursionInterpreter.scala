@@ -5,7 +5,7 @@ import scala.compiletime.asMatchable
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.{Failure, Success}
 
-object SeedGrowingRecursionInterpreter {
+object KleeneRecursionInterpreter {
   def distance[Input: Ordering, Output](best: ParserResult[Input, Output], result: ParserResult[Input, Output]): Int = {
     (best, result) match {
       case (Failure(_), Failure(_)) => 0
@@ -19,14 +19,14 @@ object SeedGrowingRecursionInterpreter {
 
 /** A partial implementation of an interpreter of [[ParserAlgebra]] for [[Parser]].
  *
- * Uses the seed growing technique to implement the `recursive` combinator, which allows for direct left-recursion.
+ * Uses kleene iteration to implement the `recursive` combinator, which allows for direct left-recursion.
  *
  * @tparam Input the type of the input to be parsed.
  */
-trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[ParserF[Input]] {
+trait KleeneRecursionInterpreter[Input: Ordering] extends ParserAlgebra[ParserF[Input]] {
   override def recursive[Output](p: Parser[Input, Output] => Parser[Input, Output]): Parser[Input, Output] = {
     def improved(best: ParserResult[Input, Output], result: ParserResult[Input, Output]): Boolean = {
-      SeedGrowingRecursionInterpreter.distance(best, result) > 0
+      KleeneRecursionInterpreter.distance(best, result) > 0
     }
 
     @annotation.tailrec
@@ -75,7 +75,7 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
         // `distance` is only applied to `best.zip(result)`
         // `best` and `result` contain `ParserResult[Input, Any]` at every position
         val (best, result) = t.asInstanceOf[(ParserResult[Input, Any], ParserResult[Input, Any])]
-        SeedGrowingRecursionInterpreter.distance(best, result)
+        KleeneRecursionInterpreter.distance(best, result)
       }
 
       val distances = best.zip(result).map[[_] =>> Int]([T] => (t: T) => distance(t)).toList
