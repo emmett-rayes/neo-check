@@ -5,6 +5,18 @@ import scala.compiletime.asMatchable
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.{Failure, Success}
 
+object SeedGrowingRecursionInterpreter {
+  def distance[Input: Ordering, Output](best: ParserResult[Input, Output], result: ParserResult[Input, Output]): Int = {
+    (best, result) match {
+      case (Failure(_), Failure(_)) => 0
+      case (Failure(_), Success(_)) => 1
+      case (Success(_), Failure(_)) => -1
+      case (Success(r1), Success(r2)) =>
+        if r2.remaining == r1.remaining then 0 else if r2.remaining < r1.remaining then 1 else -1
+    }
+  }
+}
+
 /** A partial implementation of an interpreter of [[ParserAlgebra]] for [[Parser]].
  *
  * Uses the seed growing technique to implement the `recursive` combinator, which allows for direct left-recursion.
@@ -13,13 +25,8 @@ import scala.util.{Failure, Success}
  */
 trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[ParserF[Input]] {
   override def recursive[Output](p: Parser[Input, Output] => Parser[Input, Output]): Parser[Input, Output] = {
-
     def improved(best: ParserResult[Input, Output], result: ParserResult[Input, Output]): Boolean = {
-      (best, result) match {
-        case (Failure(_), Success(_)) => true
-        case (Success(r1), Success(r2)) if r2.remaining < r1.remaining => true
-        case _ => false
-      }
+      SeedGrowingRecursionInterpreter.distance(best, result) > 0
     }
 
     @annotation.tailrec
@@ -30,7 +37,12 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
     }
 
     val seed = failure("Infinite recursion detected")
-    input => loop(seed, seed.parse(input))(input)
+    input => {
+      // this priming is necessary to make sure that the result of parsing with´seed
+      // is always less than the result of parsing with the first parser produced by `p`
+      val first = p(seed)
+      loop(first, first.parse(input))(input)
+    }
   }
 
   override def recursive[Outputs <: NamedTuple.AnyNamedTuple]
@@ -58,19 +70,16 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
 
     def improved(best: NamedTuple.Map[Outputs, ParserResultF[Input]],
                  result: NamedTuple.Map[Outputs, ParserResultF[Input]]): Boolean = {
-      def matchMap[T](t: T): Boolean = {
+      def distance[T](t: T): Int = {
         // cast safety:
-        // `matchMap` is only applied to `best.zip(result)`
+        // `distance` is only applied to `best.zip(result)`
         // `best` and `result` contain `ParserResult[Input, Any]` at every position
         val (best, result) = t.asInstanceOf[(ParserResult[Input, Any], ParserResult[Input, Any])]
-        (best, result) match {
-          case (Failure(_), Success(_)) => true
-          case (Success(r1), Success(r2)) => r2.remaining < r1.remaining
-          case _ => false
-        }
+        SeedGrowingRecursionInterpreter.distance(best, result)
       }
 
-      best.zip(result).map[[_] =>> Boolean]([T] => (t: T) => matchMap(t)).toList.contains(true)
+      val distances = best.zip(result).map[[_] =>> Int]([T] => (t: T) => distance(t)).toList
+      distances.contains(1) && !distances.contains(-1)
     }
 
     @annotation.tailrec
@@ -83,14 +92,19 @@ trait SeedGrowingRecursionInterpreter[Input: Ordering] extends ParserAlgebra[Par
 
     // cast safety:
     // `seed` contains `Parser[Input, Output(i)]` at every position `i`
-    val seed = Tuple.fromArray(Array.fill(size.value)(failure("Infinite recursion detected")))
+    val seed = Tuple.fromArray(Array.fill(size.value)(failure("left-recursion seed")))
       .asInstanceOf[NamedTuple.Map[Outputs, ParserF[Input]]]
 
     val parsers = Array.tabulate[Parser[Input, ?]](size.value) {
       i => {
-        // cast safety:
-        // `loop` produces `Map[Outputs, ParserResultF[Input]]` which has `ParserResult[Input, _)]` at every position
-        input => loop(seed, parse(seed, input))(input).toTuple.productElement(i).asInstanceOf[ParserResult[Input, Any]]
+        input => {
+          // this priming is necessary to make sure that the result of parsing with´seed
+          // is always less than the result of parsing with the first parser produced by `p`
+          val first = p(seed)
+          // cast safety:
+          // `loop` produces `Map[Outputs, ParserResultF[Input]]` which has `ParserResult[Input, _)]` at every position
+          loop(first, parse(first, input))(input).toTuple.productElement(i).asInstanceOf[ParserResult[Input, Any]]
+        }
       }
     }
     // cast safety:
